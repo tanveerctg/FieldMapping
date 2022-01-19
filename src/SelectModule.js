@@ -20,7 +20,7 @@ export default function Module({
         setModuleName(value.api_name);
       }}
       disabled={!!fromModuleName && !!toModuleName}
-      sx={{ width: 300 }}
+      sx={{ width: "100%" }}
       renderInput={(params) => <TextField {...params} label={label} />}
     />
   );

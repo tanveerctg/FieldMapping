@@ -22,7 +22,6 @@ export default function SelectField({
         onChange={(event, value) => {
           console.log(value.api_name);
         }}
-        sx={{ width: 300 }}
         renderInput={(params) => <TextField {...params} label={label} />}
       />
     </Box>

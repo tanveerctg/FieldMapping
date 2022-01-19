@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 //Material Ui
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 //UUID
 import { v4 as uuidv4 } from "uuid";
 
@@ -114,17 +115,29 @@ function App() {
   }
 
   return (
-    <div>
-      <div
-        style={{
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        flexDirection: "column",
+        minHeight: "100vh",
+        maxWidth: "700px",
+        width: "100%",
+        margin: "0 auto",
+      }}
+    >
+      {JSON.stringify(fieldMapping)}
+      <Box
+        sx={{
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "100vh",
+          width: "100%",
         }}
+        mb={2}
       >
-        {JSON.stringify(fieldMapping)}
-        <div>
+        <Box sx={{ flex: 1 }}>
           <h2>To</h2>
           <SelectModule
             modules={modules}
@@ -143,8 +156,8 @@ function App() {
               />
             </Box>
           ))}
-        </div>
-        <Box ml={2}>
+        </Box>
+        <Box ml={2} sx={{ flex: 1 }}>
           <h2>From</h2>
           <SelectModule
             modules={modules}
@@ -163,8 +176,11 @@ function App() {
             </Box>
           ))}
         </Box>
-      </div>
-    </div>
+      </Box>
+      <Button size="small" variant="contained">
+        Add Field
+      </Button>
+    </Box>
   );
 }
 
