@@ -48,6 +48,7 @@ export default function SelectFromModuleFields({
 
   return (
     <div>
+      {/* {JSON.stringify(fieldData?.to?.data_type)} */}
       <TextField
         id="outlined-multiline-static"
         placeholder="Select Fields"
@@ -55,6 +56,7 @@ export default function SelectFromModuleFields({
         multiline
         rows={1}
         style={{ width: "100%" }}
+        disabled={!fieldData.to}
         aria-describedby={id}
         inputRef={textFieldRef}
         value={textareaValue}
@@ -131,16 +133,39 @@ export default function SelectFromModuleFields({
           getOptionLabel={(option) => option.display_label}
           // disabled={fieldData?.["mandatory"]}
           sx={{ width: 300 }}
+          disableClearable={true}
           onChange={(e, value) => {
             // setSelectedField(e.target.textContent);
             console.log({ value: value.api_name });
             var start = textFieldRef.current.selectionStart,
               end = textFieldRef.current.selectionEnd;
+
+            //if data_type is not text
+            if (fieldData?.to?.data_type !== "text") {
+              const isThereAnyKeyword = /\$\{.+\}/.test(textareaValue);
+              console.log({ isThereAnyKeyword });
+              let newText;
+              // if any keyword found then replace it
+              if (isThereAnyKeyword) {
+                newText = textareaValue.replace(
+                  /\$\{.+\}/,
+                  "$" + "{" + value.api_name + "}"
+                );
+                console.log({ newText });
+                setTextAreaValue(newText);
+                handlePopoverClose();
+                return;
+              }
+            }
+
             setTextAreaValue(
               (prevValue) =>
                 prevValue.slice(0, start) +
                 " " +
+                "$" +
+                "{" +
                 value.api_name +
+                "}" +
                 prevValue.slice(end)
             );
             handlePopoverClose();

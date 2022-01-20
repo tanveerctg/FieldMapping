@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 //UUID
 import { v4 as uuidv4 } from "uuid";
 
@@ -65,7 +67,7 @@ function App() {
           .filter((field) => field.system_mandatory)
           .map((field) => ({
             id: field.id,
-            to: field.api_name,
+            to: { api_name: field.api_name, data_type: field.data_type },
             from: null,
             to_display_label: field.display_label,
             mandatory: true,
@@ -127,7 +129,7 @@ function App() {
         margin: "0 auto",
       }}
     >
-      {JSON.stringify(fieldMapping)}
+      {JSON.stringify(fieldMapping.length)}
       <Box
         sx={{
           display: "flex",
@@ -149,14 +151,17 @@ function App() {
           {fieldMapping.map((field, index) => (
             <Box mt={2}>
               <SelectToModuleField
-                fields={fieldMapping}
+                fields={field.mandatory ? fieldMapping : toModuleFields}
                 label="Select Field"
                 fieldIndex={index}
                 fieldData={field}
+                setFieldMapping={setFieldMapping}
+                fieldMapping={fieldMapping}
               />
             </Box>
           ))}
         </Box>
+
         <Box ml={2} sx={{ flex: 1 }}>
           <h2>From</h2>
           <SelectModule
@@ -167,19 +172,61 @@ function App() {
             label="Select Module Name"
           />
           {fieldMapping.map((field) => (
-            <Box mt={2}>
-              <SelectFromModuleFields
-                fields={fromModuleFields}
-                fieldData={field}
-                setFieldMapping={setFieldMapping}
-              />
+            <Box mt={2} sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ flex: 1 }}>
+                <SelectFromModuleFields
+                  fields={fromModuleFields.filter(
+                    (moduleField) =>
+                      moduleField.data_type === field?.to?.data_type
+                  )}
+                  fieldData={field}
+                  setFieldMapping={setFieldMapping}
+                />
+              </Box>
+              {!field.mandatory && (
+                <Box ml={1}>
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={() => {
+                      // setFieldMapping((prev) =>
+                      //   prev.filter(
+                      //     (mappedField) => mappedField.id !== field.id
+                      //   )
+                      // )
+                      console.log(field.id);
+                      console.log(
+                        fieldMapping.find((mapped) => field.id === mapped.id)
+                      );
+                      const filtered = fieldMapping.filter(
+                        (mappedField) => mappedField.id !== field.id
+                      );
+                      // setFieldMapping(filtered);
+                      console.log({ filtered });
+                    }}
+                  >
+                    <CloseIcon fontSize="inherit" />
+                  </IconButton>
+                </Box>
+              )}
             </Box>
           ))}
         </Box>
       </Box>
-      <Button size="small" variant="contained">
-        Add Field
-      </Button>
+      {toModuleName && fromModuleName && (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() =>
+            setFieldMapping((prev) => [
+              ...prev,
+              { id: uuidv4(), mandatory: false, to: null, from: null },
+            ])
+          }
+        >
+          Add Field
+        </Button>
+      )}
     </Box>
   );
 }

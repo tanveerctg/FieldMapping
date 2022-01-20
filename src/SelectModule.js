@@ -19,6 +19,7 @@ export default function Module({
         console.log(value.api_name);
         setModuleName(value.api_name);
       }}
+      disableClearable={true}
       disabled={!!fromModuleName && !!toModuleName}
       sx={{ width: "100%" }}
       renderInput={(params) => <TextField {...params} label={label} />}
