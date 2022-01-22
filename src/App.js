@@ -1,246 +1,281 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
 //Material Ui
-import TextField from "@mui/material/TextField"
-import Box from "@mui/material/Box"
-import Button from "@mui/material/Button"
-import IconButton from "@mui/material/IconButton"
-import CloseIcon from "@mui/icons-material/Close"
+import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 //UUID
-import { v4 as uuidv4 } from "uuid"
+import { v4 as uuidv4 } from "uuid";
 
-import getAllModules from "./getAllModules"
-import getModuleFields from "./getModuleFields"
-import SelectModule from "./SelectModule"
-import SelectToModuleField from "./SelectToModuleField"
-import SelectFromModuleFields from "./SelectFromModuleFields"
+import getAllModules from "./getAllModules";
+import getModuleFields from "./getModuleFields";
+import SelectModule from "./SelectModule";
+import SelectToModuleField from "./SelectToModuleField";
+import SelectFromModuleFields from "./SelectFromModuleFields";
 
 function App() {
-	const [loading, setLoading] = useState(true)
-	const [modules, setModules] = useState([])
-	const [fromModuleName, setFromModuleName] = useState(null)
-	const [toModuleName, setToModuleName] = useState(null)
-	const [error, setError] = useState("")
-	const [mandatoryFields, setMandatoryFields] = useState([])
-	const [fromModuleFields, setFromModuleFields] = useState([])
-	const [toModuleFields, setToModuleFields] = useState([])
-	const [fieldMapping, setFieldMapping] = useState([])
-	const [deleteFieldId, setDeleteFieldId] = useState(null)
+  const [loading, setLoading] = useState(true);
+  const [modules, setModules] = useState([]);
+  const [fromModuleName, setFromModuleName] = useState(null);
+  const [toModuleName, setToModuleName] = useState(null);
+  const [error, setError] = useState("");
+  const [mandatoryFields, setMandatoryFields] = useState([]);
+  const [fromModuleFields, setFromModuleFields] = useState([]);
+  const [toModuleFields, setToModuleFields] = useState([]);
+  const [fieldMapping, setFieldMapping] = useState([]);
+  const [deleteFieldId, setDeleteFieldId] = useState(null);
 
-	useEffect(() => {
-		;(async () => {
-			try {
-				const ZOHO = await window.ZOHO
-				/*
-				 * Subscribe to the EmbeddedApp onPageLoad event before initializing
-				 */
-				await ZOHO.embeddedApp.on("PageLoad")
-				/*
-				 * initializing the widget.
-				 */
-				await ZOHO.embeddedApp.init()
+  useEffect(() => {
+    (async () => {
+      try {
+        const ZOHO = await window.ZOHO;
+        /*
+         * Subscribe to the EmbeddedApp onPageLoad event before initializing
+         */
+        await ZOHO.embeddedApp.on("PageLoad");
+        /*
+         * initializing the widget.
+         */
+        await ZOHO.embeddedApp.init();
 
-				setLoading(true)
-				const modules = await getAllModules()
-				// const getContactFields = await getModuleFields("Contacts");
-				console.log({ modules })
-				setModules(modules)
-				setLoading(false)
-			} catch (err) {
-				setError(err)
-			}
-		})()
-	}, [])
+        setLoading(true);
+        const modules = await getAllModules();
+        // const getContactFields = await getModuleFields("Contacts");
+        console.log({ modules });
+        setModules(modules);
+        setLoading(false);
+      } catch (err) {
+        setError(err);
+      }
+    })();
+  }, []);
 
-	useEffect(() => {
-		const filtered = fieldMapping.filter(
-			(mappedField) => mappedField.id !== deleteFieldId
-		)
-		setTimeout(() => {
-			setFieldMapping(filtered)
-		}, 100)
-		console.log({ filtered })
-	}, [deleteFieldId])
+  useEffect(() => {
+    const filtered = fieldMapping.filter(
+      (mappedField) => mappedField.id !== deleteFieldId
+    );
+    setTimeout(() => {
+      setFieldMapping(filtered);
+    }, 100);
+    console.log({ filtered });
+  }, [deleteFieldId]);
 
-	useEffect(() => {
-		if (fromModuleName && toModuleName) {
-			//Fetch module fields
-			;(async () => {
-				const fromModuleFields = await getModuleFields(fromModuleName)
-				const toModuleFields = await getModuleFields(toModuleName)
-				console.log({ fromModuleName, toModuleName })
+  useEffect(() => {
+    if (fromModuleName && toModuleName) {
+      //Fetch module fields
+      (async () => {
+        const fromModuleFields = await getModuleFields(fromModuleName);
+        const toModuleFields = await getModuleFields(toModuleName);
+        console.log({ fromModuleName, toModuleName });
 
-				setFromModuleFields(fromModuleFields)
-				setToModuleFields(toModuleFields)
+        setFromModuleFields(fromModuleFields);
+        setToModuleFields(toModuleFields);
 
-				//Get To Module Field's mandatory fields
-				const mandatoryFields = toModuleFields
-					.filter((field) => field.system_mandatory)
-					.map((field) => ({
-						id: field.id,
-						to: {
-							api_name: field.api_name,
-							data_type: field.data_type,
-							display_label: field.display_label,
-						},
-						from: null,
+        //Get To Module Field's mandatory fields
+        const mandatoryFields = toModuleFields
+          .filter((field) => field.system_mandatory)
+          .map((field) => ({
+            id: field.id,
+            to: {
+              api_name: field.api_name,
+              data_type: field.data_type,
+              display_label: field.display_label,
+            },
+            from: field.api_name,
 
-						mandatory: true,
-					}))
-				console.log({ mandatoryFields, toModuleFields })
-				// setMandatoryFields(mandatoryFields);
-				setFieldMapping((prev) => [...mandatoryFields])
+            mandatory: true,
+          }));
+        console.log({ mandatoryFields, toModuleFields });
+        // setMandatoryFields(mandatoryFields);
+        setFieldMapping((prev) => [...prev, ...mandatoryFields]);
 
-				//fieldMapping
-				// [
-				//   {
-				//    id:"23123213",
-				//    from:"deal_name",
-				//    to:"account_name",
-				//    mandatory:true,
-				//    to_display_label:Deal
-				//   }
-				// ]
+        //fieldMapping
+        // [
+        //   {
+        //    id:"23123213",
+        //    from:"deal_name",
+        //    to:"account_name",
+        //    mandatory:true,
+        //    to_display_label:Deal
+        //   }
+        // ]
 
-				// {
-				// From_Module:
-				// To_Module:
-				// FieldMapping:{
-				// to_field_api_name:from_field_api_name
-				// }
-				// }
+        // {
+        // From_Module:
+        // To_Module:
+        // FieldMapping:{
+        // to_field_api_name:from_field_api_name
+        // }
+        // }
 
-				// when user selects a field from TOMODULE then populate respective field's api name to fieldmapping and set it value null
-				// Eg {
-				//   ...
-				//   FieldMapping:{
-				//    account:null
-				//   }
-				// }
-			})()
-		}
-	}, [fromModuleName, toModuleName])
+        // when user selects a field from TOMODULE then populate respective field's api name to fieldmapping and set it value null
+        // Eg {
+        //   ...
+        //   FieldMapping:{
+        //    account:null
+        //   }
+        // }
+      })();
+    }
+  }, [fromModuleName, toModuleName]);
 
-	//any error found while calling zoho apis then show error
-	if (error) {
-		return <div>{error}</div>
-	}
+  //any error found while calling zoho apis then show error
+  if (error) {
+    return <div>{error}</div>;
+  }
 
-	//show loader while modules is being fetched
-	if (loading) {
-		return <div>Loading...</div>
-	}
+  //show loader while modules is being fetched
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-	return (
-		<Box
-			sx={{
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "flex-start",
-				flexDirection: "column",
-				minHeight: "100vh",
-				maxWidth: "700px",
-				width: "100%",
-				margin: "0 auto",
-			}}
-		>
-			{JSON.stringify(fieldMapping)}
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "center",
-					alignItems: "center",
-					width: "100%",
-				}}
-				mb={2}
-			>
-				<Box sx={{ flex: 1 }}>
-					<h2>To</h2>
-					<SelectModule
-						modules={modules}
-						fromModuleName={fromModuleName}
-						toModuleName={toModuleName}
-						setModuleName={setToModuleName}
-						label='Select Module Name'
-					/>
-					{fieldMapping.map((field, index) => (
-						<Box mt={2}>
-							<SelectToModuleField
-								fields={field.mandatory ? fieldMapping : toModuleFields}
-								label='Select Field'
-								fieldIndex={index}
-								fieldData={field}
-								setFieldMapping={setFieldMapping}
-								fieldMapping={fieldMapping}
-							/>
-						</Box>
-					))}
-				</Box>
+  console.log({ toModuleFields, fromModuleFields });
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        flexDirection: "column",
+        minHeight: "100vh",
+        maxWidth: "700px",
+        width: "100%",
+        margin: "0 auto",
+      }}
+    >
+      {JSON.stringify(fieldMapping)}
+      <Button
+        variant="contained"
+        onClick={() => {
+          //find fields which are not included in the fieldmapping
+          const fields = toModuleFields.flatMap((toModuleField) => {
+            const isFieldFound = fieldMapping.find(
+              (fieldMappingField) =>
+                toModuleField.api_name === fieldMappingField.to.api_name
+            );
 
-				<Box ml={2} sx={{ flex: 1 }}>
-					<h2>From</h2>
-					<SelectModule
-						modules={modules}
-						fromModuleName={fromModuleName}
-						toModuleName={toModuleName}
-						setModuleName={setFromModuleName}
-						label='Select Module Name'
-					/>
-					{fieldMapping.map((field) => (
-						<Box mt={2} sx={{ display: "flex", alignItems: "center" }}>
-							<Box sx={{ flex: 1 }}>
-								<SelectFromModuleFields
-									fields={fromModuleFields.filter(
-										(moduleField) =>
-											moduleField.data_type === field?.to?.data_type
-									)}
-									fieldData={field}
-									setFieldMapping={setFieldMapping}
-								/>
-							</Box>
-							{!field.mandatory && (
-								<Box ml={1}>
-									<IconButton
-										aria-label='delete'
-										size='small'
-										onClick={() => {
-											// setFieldMapping((prev) =>
-											//   prev.filter(
-											//     (mappedField) => mappedField.id !== field.id
-											//   )
-											// )
-											// console.log(field.id)
-											// console.log(
-											// 	fieldMapping.find((mapped) => field.id === mapped.id)
-											// )
+            if (isFieldFound) {
+              console.log(isFieldFound);
+              //return empty array
+              return [];
+            } else {
+              return [
+                {
+                  id: toModuleField.id,
+                  to: {
+                    api_name: toModuleField.api_name,
+                    data_type: toModuleField.data_type,
+                    display_label: toModuleField.display_label,
+                  },
+                  from: toModuleField.api_name,
+                  mandatory: false,
+                },
+              ];
+            }
+          });
+          console.log({ FOUNDFIELDS: fields });
+        }}
+      >
+        Auto Mapiing
+      </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+        }}
+        mb={2}
+      >
+        <Box sx={{ flex: 1 }}>
+          <h2>To</h2>
+          <SelectModule
+            modules={modules}
+            fromModuleName={fromModuleName}
+            toModuleName={toModuleName}
+            setModuleName={setToModuleName}
+            label="Select Module Name"
+          />
+          {fieldMapping.map((field, index) => (
+            <Box mt={2}>
+              <SelectToModuleField
+                fields={field.mandatory ? fieldMapping : toModuleFields}
+                label="Select Field"
+                fieldIndex={index}
+                fieldData={field}
+                setFieldMapping={setFieldMapping}
+                fieldMapping={fieldMapping}
+              />
+            </Box>
+          ))}
+        </Box>
 
-											setDeleteFieldId(field.id)
-										}}
-									>
-										<CloseIcon fontSize='inherit' />
-									</IconButton>
-								</Box>
-							)}
-						</Box>
-					))}
-				</Box>
-			</Box>
-			{toModuleName && fromModuleName && (
-				<Button
-					size='small'
-					variant='contained'
-					onClick={() =>
-						setFieldMapping((prev) => [
-							...prev,
-							{ id: uuidv4(), mandatory: false, to: null, from: null },
-						])
-					}
-				>
-					Add Field
-				</Button>
-			)}
-		</Box>
-	)
+        <Box ml={2} sx={{ flex: 1 }}>
+          <h2>From</h2>
+          <SelectModule
+            modules={modules}
+            fromModuleName={fromModuleName}
+            toModuleName={toModuleName}
+            setModuleName={setFromModuleName}
+            label="Select Module Name"
+          />
+          {fieldMapping.map((field) => (
+            <Box mt={2} sx={{ display: "flex", alignItems: "center" }}>
+              <Box sx={{ flex: 1 }}>
+                <SelectFromModuleFields
+                  fields={fromModuleFields.filter(
+                    (moduleField) =>
+                      moduleField.data_type === field?.to?.data_type
+                  )}
+                  fieldData={field}
+                  setFieldMapping={setFieldMapping}
+                />
+              </Box>
+              {!field.mandatory && (
+                <Box ml={1}>
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={() => {
+                      // setFieldMapping((prev) =>
+                      //   prev.filter(
+                      //     (mappedField) => mappedField.id !== field.id
+                      //   )
+                      // )
+                      // console.log(field.id)
+                      // console.log(
+                      // 	fieldMapping.find((mapped) => field.id === mapped.id)
+                      // )
+
+                      setDeleteFieldId(field.id);
+                    }}
+                  >
+                    <CloseIcon fontSize="inherit" />
+                  </IconButton>
+                </Box>
+              )}
+            </Box>
+          ))}
+        </Box>
+      </Box>
+      {toModuleName && fromModuleName && (
+        <Button
+          size="small"
+          variant="contained"
+          onClick={() =>
+            setFieldMapping((prev) => [
+              ...prev,
+              { id: uuidv4(), mandatory: false, to: null, from: null },
+            ])
+          }
+        >
+          Add Field
+        </Button>
+      )}
+    </Box>
+  );
 }
 
-export default App
+export default App;
