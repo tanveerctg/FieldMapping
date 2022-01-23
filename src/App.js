@@ -83,8 +83,7 @@ function App() {
               data_type: field.data_type,
               display_label: field.display_label,
             },
-            from: field.api_name,
-
+            from: null,
             mandatory: true,
           }));
         console.log({ mandatoryFields, toModuleFields });
@@ -139,43 +138,131 @@ function App() {
         justifyContent: "center",
         alignItems: "flex-start",
         flexDirection: "column",
-        minHeight: "100vh",
+        // minHeight: "100vh",
         maxWidth: "700px",
         width: "100%",
         margin: "0 auto",
       }}
     >
-      {JSON.stringify(fieldMapping)}
+      {/* {JSON.stringify(fieldMapping)} */}
       <Button
         variant="contained"
         onClick={() => {
-          //find fields which are not included in the fieldmapping
-          const fields = toModuleFields.flatMap((toModuleField) => {
+          //find those fieldmapping fields whose to property is not null but from property is null
+          // const fields = toModuleFields.flatMap((toModuleField) => {
+          //   const isFieldFound = fieldMapping.find(
+          //     (fieldMappingField) =>
+          //       toModuleField.api_name === fieldMappingField.to?.api_name &&
+          //       fieldMappingField.to !== null &&
+          //       fieldMappingField.from
+          //   );
+
+          //   console.log({ isFieldFound });
+
+          //   if (isFieldFound) {
+          //     console.log(isFieldFound);
+          //     //return empty array
+          //     return [isFieldFound];
+          //   } else {
+          //     return [
+          //       {
+          //         id: uuidv4(),
+          //         to: {
+          //           api_name: toModuleField.api_name,
+          //           data_type: toModuleField.data_type,
+          //           display_label: toModuleField.display_label,
+          //         },
+          //         from: "$" + "{" + toModuleField.api_name + "}",
+          //         mandatory: false,
+          //       },
+          //     ];
+          //   }
+          // });
+          // setFieldMapping(fields);
+          // console.log({ FOUNDFIELDS: fields });
+          console.log({ toModuleFields, fromModuleFields });
+          const from_module_fields_based_on_display_level = {};
+          fromModuleFields.forEach((field) => {
+            console.log(field.display_label);
+            from_module_fields_based_on_display_level[field.display_label] =
+              field;
+          });
+
+          console.log(from_module_fields_based_on_display_level);
+          const commonFields = toModuleFields.flatMap((toModuleField) => {
+            const mappedFields = from_module_fields_based_on_display_level;
+
+            return mappedFields[toModuleField.display_label]
+              ? [
+                  {
+                    toModuleField,
+                    fromModuleField: mappedFields[toModuleField.display_label],
+                  },
+                ]
+              : [];
+          });
+          console.log({ commonFields });
+
+          //deduct toModuleFields which are invalid
+          //find those fieldmapping fields whose to property is not null but from property is null
+          const fields = commonFields.flatMap((field) => {
             const isFieldFound = fieldMapping.find(
               (fieldMappingField) =>
-                toModuleField.api_name === fieldMappingField.to.api_name
+                field.toModuleField.api_name ===
+                  fieldMappingField.to.api_name &&
+                fieldMappingField.to !== null &&
+                fieldMappingField.from
             );
-
+            // console.log({ isFieldFound });
+            // // debugger;
+            // if (isFieldFound) {
+            //   return false;
+            // } else {
+            //   return isFieldFound;
+            // }
+            console.log({ isFieldFound });
             if (isFieldFound) {
-              console.log(isFieldFound);
-              //return empty array
-              return [];
+              return [
+                {
+                  ...isFieldFound,
+                },
+              ];
             } else {
               return [
                 {
-                  id: toModuleField.id,
+                  id: uuidv4(),
                   to: {
-                    api_name: toModuleField.api_name,
-                    data_type: toModuleField.data_type,
-                    display_label: toModuleField.display_label,
+                    api_name: field.fromModuleField.api_name,
+                    data_type: field.fromModuleField.data_type,
+                    display_label: field.fromModuleField.display_label,
                   },
-                  from: toModuleField.api_name,
+                  from: "$" + "{" + field.fromModuleField.api_name + "}",
                   mandatory: false,
                 },
               ];
             }
+
+            //   if (isFieldFound) {
+            //     console.log(isFieldFound);
+            //     //return empty array
+            //     return [isFieldFound];
+            //   } else {
+            //     return [
+            //       {
+            //         id: uuidv4(),
+            //         to: {
+            //           api_name: toModuleField.api_name,
+            //           data_type: toModuleField.data_type,
+            //           display_label: toModuleField.display_label,
+            //         },
+            //         from: "$" + "{" + toModuleField.api_name + "}",
+            //         mandatory: false,
+            //       },
+            //     ];
+            //   }
           });
-          console.log({ FOUNDFIELDS: fields });
+          console.log("FILTERED LIST", fields);
+          setFieldMapping(fields);
         }}
       >
         Auto Mapiing
