@@ -88,9 +88,11 @@ export default function SelectFromModuleFields({
               //popOver position
               let left;
               let top =
-                event.target.offsetTop -
-                event.target.scrollTop +
-                coordinates.top;
+                (
+                  document.documentElement ||
+                  document.body.parentNode ||
+                  document.body
+                ).scrollTop + coordinates.top;
               const isThereRoomForPopoverWidth =
                 windowouterWidth > popOverWidth;
 
@@ -125,9 +127,17 @@ export default function SelectFromModuleFields({
         ref={popOverRef}
         style={{
           position: "absolute",
-          top: `${top - 50}px`,
+          top: `${
+            window.pageYOffset - 56 ||
+            (
+              document.documentElement ||
+              document.body.parentNode ||
+              document.body
+            ).scrollTop - 56
+          }px`,
           left: `${left - 10}px`,
           padding: "20px",
+          height: "100%",
         }}
       >
         <Autocomplete
@@ -135,7 +145,7 @@ export default function SelectFromModuleFields({
           // {...(fieldData?.["mandatory"] && { value: fields[fieldIndex] })}
           getOptionLabel={(option) => option.display_label}
           // disabled={fieldData?.["mandatory"]}
-          sx={{ width: 300 }}
+          sx={{ width: 300, padding: "10px" }}
           disableClearable={true}
           onChange={(e, value) => {
             // setSelectedField(e.target.textContent);

@@ -97,7 +97,7 @@ function App() {
         //   {
         //    id:"23123213",
         //    from:"deal_name",
-        //    to:{"account_name"},
+        //    to:"account_name",
         //    mandatory:true,
         //    to_display_label:Deal
         //   }
@@ -146,7 +146,7 @@ function App() {
         margin: "0 auto",
       }}
     >
-      {JSON.stringify(fieldMapping)}
+      {/* {JSON.stringify(fieldMapping)} */}
       <Button
         variant="contained"
         onClick={() => {
@@ -206,95 +206,96 @@ function App() {
 
           const fieldMappingBasedOnApiName = {};
           fieldMapping.forEach((field) => {
-            fieldMappingBasedOnApiName[field.to?.api_name || field.id] = field;
-            fieldMappingBasedOnApiName[
-              field.to?.api_name || field.id
-            ].counted = false;
+            fieldMappingBasedOnApiName[field.to.api_name] = field;
           });
-
           //deduct toModuleFields which are invalid
           //find those fieldmapping fields whose to property is not null but from property is null
-          const fields = commonFields.flatMap((field) => {
-            //if a field of commonFields is found in fieldmapping and to property of that field is not empty and from property of that field is empty
-            const isEmptyFromFieldOfFieldMapping =
-              fieldMappingBasedOnApiName[field.toModuleField.api_name] &&
-              fieldMappingBasedOnApiName[field.toModuleField.api_name].to !==
-                null &&
-              !fieldMappingBasedOnApiName[field.toModuleField.api_name].from;
+          const fields = commonFields
+            .flatMap((field) => {
+              // const isFieldFound = fieldMapping.find(
+              //   (fieldMappingField) =>
+              //     field.toModuleField.api_name ===
+              //       fieldMappingField.to.api_name &&
+              //     fieldMappingField.to !== null &&
+              //     fieldMappingField.from
+              // );
+              const isFieldFound =
+                fieldMappingBasedOnApiName[field.toModuleField.api_name] &&
+                fieldMappingBasedOnApiName[field.toModuleField.api_name].to !==
+                  null &&
+                fieldMappingBasedOnApiName[field.toModuleField.api_name].from;
 
-            console.log(
-              fieldMappingBasedOnApiName[field.toModuleField.api_name],
-              isEmptyFromFieldOfFieldMapping
-            );
+              const isMandatoryFieldEmpty =
+                fieldMappingBasedOnApiName[field.toModuleField.api_name]
+                  ?.mandatory &&
+                fieldMappingBasedOnApiName[field.toModuleField.api_name];
+              // console.log({
+              //   isMandatoryFieldEmpty:
+              //     fieldMappingBasedOnApiName[field.toModuleField.api_name]
+              //       ?.mandatory &&
+              //     fieldMappingBasedOnApiName[field.toModuleField.api_name],
+              // });
+              // // debugger;
+              // if (isFieldFound) {
+              //   return false;
+              // } else {
+              //   return isFieldFound;
+              // }
 
-            //if a field of fieldMapping is mandatory
-            const isMandatoryField =
-              fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                ?.mandatory &&
-              fieldMappingBasedOnApiName[field.toModuleField.api_name];
-
-            //this is because of keep tracking fields of fieldMapping which is included in the commonFields
-            if (fieldMappingBasedOnApiName[field.toModuleField?.api_name]) {
-              fieldMappingBasedOnApiName[
-                field.toModuleField?.api_name
-              ].counted = true;
-            }
-
-            if (isMandatoryField) {
-              console.log("ASHCHE", isMandatoryField);
-              return [
-                {
-                  ...isMandatoryField,
-                  from:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      .from || "$" + "{" + field.fromModuleField.api_name + "}",
-                },
-              ];
-            } else if (isEmptyFromFieldOfFieldMapping) {
-              console.log("isEmptyFromField", isEmptyFromFieldOfFieldMapping);
-              return [fieldMappingBasedOnApiName[field.toModuleField.api_name]];
-            } else {
-              console.log("ELSE");
-              return [
-                {
-                  id:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      ?.id || uuidv4(),
-                  to: fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                    ?.to || {
-                    api_name: field.fromModuleField.api_name,
-                    data_type: field.fromModuleField.data_type,
-                    display_label: field.fromModuleField.display_label,
+              if (isMandatoryFieldEmpty) {
+                console.log("ASHCHE", isMandatoryFieldEmpty);
+                return [
+                  {
+                    ...isMandatoryFieldEmpty,
+                    from:
+                      fieldMappingBasedOnApiName[field.toModuleField.api_name]
+                        .from ||
+                      "$" + "{" + field.fromModuleField.api_name + "}",
                   },
-                  from:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      ?.from ||
-                    "$" + "{" + field.fromModuleField.api_name + "}",
-                  mandatory: false,
-                },
-              ];
-            }
-          });
+                ];
+              } else if (isFieldFound) {
+                return [isFieldFound];
+              } else {
+                return [
+                  {
+                    id: uuidv4(),
+                    to: {
+                      api_name: field.fromModuleField.api_name,
+                      data_type: field.fromModuleField.data_type,
+                      display_label: field.fromModuleField.display_label,
+                    },
+                    from: "$" + "{" + field.fromModuleField.api_name + "}",
+                    mandatory: false,
+                  },
+                ];
+              }
 
-          console.log({ fields });
+              //   if (isFieldFound) {
+              //     console.log(isFieldFound);
+              //     //return empty array
+              //     return [isFieldFound];
+              //   } else {
+              //     return [
+              //       {
+              //         id: uuidv4(),
+              //         to: {
+              //           api_name: toModuleField.api_name,
+              //           data_type: toModuleField.data_type,
+              //           display_label: toModuleField.display_label,
+              //         },
+              //         from: "$" + "{" + toModuleField.api_name + "}",
+              //         mandatory: false,
+              //       },
+              //     ];
+              //   }
+            })
+            .sort((x, y) => (x.mandatory === y.mandatory ? 0 : x ? -1 : 1));
 
-          const fieldsNotIncludedInCommonFields = Object.values(
-            fieldMappingBasedOnApiName
-          ).filter((field) => !field.counted);
-
-          const aa = [...fields, ...fieldsNotIncludedInCommonFields].sort(
-            (x, y) => (x.mandatory === y.mandatory ? 0 : x ? -1 : 1)
-          );
-          console.log(
-            "FILTERED LIST",
-            fields,
-            fieldMappingBasedOnApiName,
-            fieldsNotIncludedInCommonFields
-          );
-          setFieldMapping(aa);
+          console.log("FILTERED LIST", fields);
+          setFieldMapping(fields);
         }}
       >
-        Auto Maping
+        Auto Mapiing
       </Button>
       <Box
         sx={{
@@ -307,7 +308,6 @@ function App() {
       >
         <Box sx={{ flex: 1 }}>
           <h2>To</h2>
-
           <SelectModule
             modules={modules}
             fromModuleName={fromModuleName}
@@ -315,7 +315,6 @@ function App() {
             setModuleName={setToModuleName}
             label="Select Module Name"
           />
-
           {fieldMapping.map((field, index) => (
             <Box mt={2}>
               <SelectToModuleField
@@ -332,16 +331,13 @@ function App() {
 
         <Box ml={2} sx={{ flex: 1 }}>
           <h2>From</h2>
-          <Box sx={{ display: "flex" }}>
-            <SelectModule
-              modules={modules}
-              fromModuleName={fromModuleName}
-              toModuleName={toModuleName}
-              setModuleName={setFromModuleName}
-              label="Select Module Name"
-            />
-            <Box sx={{ width: "36px" }} />
-          </Box>
+          <SelectModule
+            modules={modules}
+            fromModuleName={fromModuleName}
+            toModuleName={toModuleName}
+            setModuleName={setFromModuleName}
+            label="Select Module Name"
+          />
           {fieldMapping.map((field) => (
             <Box mt={2} sx={{ display: "flex", alignItems: "center" }}>
               <Box sx={{ flex: 1 }}>
@@ -354,7 +350,7 @@ function App() {
                   setFieldMapping={setFieldMapping}
                 />
               </Box>
-              {!field.mandatory ? (
+              {!field.mandatory && (
                 <Box ml={1}>
                   <IconButton
                     aria-label="delete"
@@ -376,8 +372,6 @@ function App() {
                     <CloseIcon fontSize="inherit" />
                   </IconButton>
                 </Box>
-              ) : (
-                <Box sx={{ width: "36px" }} />
               )}
             </Box>
           ))}
