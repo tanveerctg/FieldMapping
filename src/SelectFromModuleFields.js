@@ -12,8 +12,8 @@ export default function SelectFromModuleFields({
   setFieldMapping,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [top, setTop] = useState(255);
-  const [left, setLeft] = useState(277);
+  const [top, setTop] = useState(0);
+  const [left, setLeft] = useState(0);
   const [textareaValue, setTextAreaValue] = useState(fieldData.from || "");
 
   const popOverRef = useRef();
@@ -31,11 +31,8 @@ export default function SelectFromModuleFields({
   const id = open ? "simple-popover" : undefined;
 
   useEffect(() => {
-    console.log({ textareaValue }, fieldData, fieldData.length);
-
     // set text to from fields in fieldmapping
 
-    console.log({ textareaValue });
     setFieldMapping((prev) =>
       prev.map((field) => {
         if (field.id !== fieldData.id) {
@@ -49,9 +46,6 @@ export default function SelectFromModuleFields({
 
   return (
     <div>
-      {/* {JSON.stringify(fieldData?.to?.data_type)}
-			{fieldData.id}
-			{textareaValue} */}
       <TextField
         id="outlined-multiline-static"
         placeholder="Select Fields"

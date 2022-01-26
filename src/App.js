@@ -14,6 +14,8 @@ import getModuleFields from "./getModuleFields";
 import SelectModule from "./SelectModule";
 import SelectToModuleField from "./SelectToModuleField";
 import SelectFromModuleFields from "./SelectFromModuleFields";
+import SubForm from "./SubForm";
+import handleAutoMapping from "./handleAutoMapping";
 
 import "./App.css";
 
@@ -23,11 +25,12 @@ function App() {
   const [fromModuleName, setFromModuleName] = useState(null);
   const [toModuleName, setToModuleName] = useState(null);
   const [error, setError] = useState("");
-  const [mandatoryFields, setMandatoryFields] = useState([]);
   const [fromModuleFields, setFromModuleFields] = useState([]);
   const [toModuleFields, setToModuleFields] = useState([]);
   const [fieldMapping, setFieldMapping] = useState([]);
   const [deleteFieldId, setDeleteFieldId] = useState(null);
+  const [shouldSubformAdd, setShouldSubformAdd] = useState(false);
+  const [subformFields, setSubformFields] = useState({ to: [], from: [] });
 
   useEffect(() => {
     (async () => {
@@ -72,6 +75,22 @@ function App() {
         const toModuleFields = await getModuleFields(toModuleName);
         console.log({ fromModuleName, toModuleName });
 
+        const subformOfFromModule = fromModuleFields.flatMap((field) =>
+          field.subform ? [field.subform] : []
+        );
+        const subformOfToModule = toModuleFields.flatMap((field) =>
+          field.subform ? [field.subform] : []
+        );
+        console.log({ subformOfFromModule, subformOfToModule });
+        //if both module has subform fields then we can add subform
+        if (subformOfToModule.length > 0 && subformOfFromModule.length > 0) {
+          setSubformFields({
+            to: subformOfFromModule,
+            from: subformOfFromModule,
+          });
+          setShouldSubformAdd(true);
+        }
+
         setFromModuleFields(fromModuleFields);
         setToModuleFields(toModuleFields);
 
@@ -97,27 +116,10 @@ function App() {
         //   {
         //    id:"23123213",
         //    from:"deal_name",
-        //    to:{"account_name"},
+        //    to:{"api_name":"Last_Name","data_type":"text","display_label":"Last Name"},
         //    mandatory:true,
-        //    to_display_label:Deal
         //   }
         // ]
-
-        // {
-        // From_Module:
-        // To_Module:
-        // FieldMapping:{
-        // to_field_api_name:from_field_api_name
-        // }
-        // }
-
-        // when user selects a field from TOMODULE then populate respective field's api name to fieldmapping and set it value null
-        // Eg {
-        //   ...
-        //   FieldMapping:{
-        //    account:null
-        //   }
-        // }
       })();
     }
   }, [fromModuleName, toModuleName]);
@@ -140,161 +142,24 @@ function App() {
         justifyContent: "center",
         alignItems: "flex-start",
         flexDirection: "column",
-        // minHeight: "100vh",
         maxWidth: "700px",
         width: "100%",
         margin: "0 auto",
       }}
     >
-      {JSON.stringify(fieldMapping)}
+      {/* {JSON.stringify(fieldMapping)} */}
       <Button
         variant="contained"
         onClick={() => {
-          //find those fieldmapping fields whose to property is not null but from property is null
-          // const fields = toModuleFields.flatMap((toModuleField) => {
-          //   const isFieldFound = fieldMapping.find(
-          //     (fieldMappingField) =>
-          //       toModuleField.api_name === fieldMappingField.to?.api_name &&
-          //       fieldMappingField.to !== null &&
-          //       fieldMappingField.from
-          //   );
-
-          //   console.log({ isFieldFound });
-
-          //   if (isFieldFound) {
-          //     console.log(isFieldFound);
-          //     //return empty array
-          //     return [isFieldFound];
-          //   } else {
-          //     return [
-          //       {
-          //         id: uuidv4(),
-          //         to: {
-          //           api_name: toModuleField.api_name,
-          //           data_type: toModuleField.data_type,
-          //           display_label: toModuleField.display_label,
-          //         },
-          //         from: "$" + "{" + toModuleField.api_name + "}",
-          //         mandatory: false,
-          //       },
-          //     ];
-          //   }
-          // });
-          // setFieldMapping(fields);
-          // console.log({ FOUNDFIELDS: fields });
-          // console.log({ toModuleFields, fromModuleFields });
-          const from_module_fields_based_on_display_level = {};
-          fromModuleFields.forEach((field) => {
-            // console.log(field.display_label);
-            from_module_fields_based_on_display_level[field.display_label] =
-              field;
+          const autoMappedFields = handleAutoMapping({
+            toModuleFields,
+            fromModuleFields,
+            fieldMapping,
           });
-
-          const commonFields = toModuleFields.flatMap((toModuleField) => {
-            const mappedFields = from_module_fields_based_on_display_level;
-
-            return mappedFields[toModuleField.display_label]
-              ? [
-                  {
-                    toModuleField,
-                    fromModuleField: mappedFields[toModuleField.display_label],
-                  },
-                ]
-              : [];
-          });
-          // console.log({ commonFields });
-
-          const fieldMappingBasedOnApiName = {};
-          fieldMapping.forEach((field) => {
-            fieldMappingBasedOnApiName[field.to?.api_name || field.id] = field;
-            fieldMappingBasedOnApiName[
-              field.to?.api_name || field.id
-            ].counted = false;
-          });
-
-          //deduct toModuleFields which are invalid
-          //find those fieldmapping fields whose to property is not null but from property is null
-          const fields = commonFields.flatMap((field) => {
-            //if a field of commonFields is found in fieldmapping and to property of that field is not empty and from property of that field is empty
-            const isEmptyFromFieldOfFieldMapping =
-              fieldMappingBasedOnApiName[field.toModuleField.api_name] &&
-              fieldMappingBasedOnApiName[field.toModuleField.api_name].to !==
-                null &&
-              !fieldMappingBasedOnApiName[field.toModuleField.api_name].from;
-
-            console.log(
-              fieldMappingBasedOnApiName[field.toModuleField.api_name],
-              isEmptyFromFieldOfFieldMapping
-            );
-
-            //if a field of fieldMapping is mandatory
-            const isMandatoryField =
-              fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                ?.mandatory &&
-              fieldMappingBasedOnApiName[field.toModuleField.api_name];
-
-            //this is because of keep tracking fields of fieldMapping which is included in the commonFields
-            if (fieldMappingBasedOnApiName[field.toModuleField?.api_name]) {
-              fieldMappingBasedOnApiName[
-                field.toModuleField?.api_name
-              ].counted = true;
-            }
-
-            if (isMandatoryField) {
-              console.log("ASHCHE", isMandatoryField);
-              return [
-                {
-                  ...isMandatoryField,
-                  from:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      .from || "$" + "{" + field.fromModuleField.api_name + "}",
-                },
-              ];
-            } else if (isEmptyFromFieldOfFieldMapping) {
-              console.log("isEmptyFromField", isEmptyFromFieldOfFieldMapping);
-              return [fieldMappingBasedOnApiName[field.toModuleField.api_name]];
-            } else {
-              console.log("ELSE");
-              return [
-                {
-                  id:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      ?.id || uuidv4(),
-                  to: fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                    ?.to || {
-                    api_name: field.fromModuleField.api_name,
-                    data_type: field.fromModuleField.data_type,
-                    display_label: field.fromModuleField.display_label,
-                  },
-                  from:
-                    fieldMappingBasedOnApiName[field.toModuleField.api_name]
-                      ?.from ||
-                    "$" + "{" + field.fromModuleField.api_name + "}",
-                  mandatory: false,
-                },
-              ];
-            }
-          });
-
-          console.log({ fields });
-
-          const fieldsNotIncludedInCommonFields = Object.values(
-            fieldMappingBasedOnApiName
-          ).filter((field) => !field.counted);
-
-          const aa = [...fields, ...fieldsNotIncludedInCommonFields].sort(
-            (x, y) => (x.mandatory === y.mandatory ? 0 : x ? -1 : 1)
-          );
-          console.log(
-            "FILTERED LIST",
-            fields,
-            fieldMappingBasedOnApiName,
-            fieldsNotIncludedInCommonFields
-          );
-          setFieldMapping(aa);
+          setFieldMapping(autoMappedFields);
         }}
       >
-        Auto Maping
+        Auto Mapping
       </Button>
       <Box
         sx={{
@@ -317,7 +182,7 @@ function App() {
           />
 
           {fieldMapping.map((field, index) => (
-            <Box mt={2}>
+            <Box mt={2} key={field.id}>
               <SelectToModuleField
                 fields={field.mandatory ? fieldMapping : toModuleFields}
                 label="Select Field"
@@ -343,7 +208,11 @@ function App() {
             <Box sx={{ width: "36px" }} />
           </Box>
           {fieldMapping.map((field) => (
-            <Box mt={2} sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              mt={2}
+              sx={{ display: "flex", alignItems: "center" }}
+              key={field.id}
+            >
               <Box sx={{ flex: 1 }}>
                 <SelectFromModuleFields
                   fields={fromModuleFields.filter(
@@ -360,16 +229,6 @@ function App() {
                     aria-label="delete"
                     size="small"
                     onClick={() => {
-                      // setFieldMapping((prev) =>
-                      //   prev.filter(
-                      //     (mappedField) => mappedField.id !== field.id
-                      //   )
-                      // )
-                      // console.log(field.id)
-                      // console.log(
-                      // 	fieldMapping.find((mapped) => field.id === mapped.id)
-                      // )
-
                       setDeleteFieldId(field.id);
                     }}
                   >
@@ -397,6 +256,7 @@ function App() {
           Add Field
         </Button>
       )}
+      {shouldSubformAdd && <SubForm subformFields={subformFields} />}
     </Box>
   );
 }
