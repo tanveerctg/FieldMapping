@@ -40,7 +40,7 @@ export default function SelectField({
                   (field) => field.api_name === fieldData?.to?.api_name
                 )
               ]
-            : ""
+            : null
         }
         getOptionLabel={(option) =>
           fieldData?.["mandatory"]
