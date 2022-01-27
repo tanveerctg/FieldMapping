@@ -45,7 +45,7 @@ export default function SelectFromModuleFields({
   }, [textareaValue]);
 
   return (
-    <div>
+    <>
       <TextField
         id="outlined-multiline-static"
         placeholder="Select Fields"
@@ -182,6 +182,6 @@ export default function SelectFromModuleFields({
           )}
         />
       </Popover>
-    </div>
+    </>
   );
 }

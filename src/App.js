@@ -158,10 +158,92 @@ function App() {
           });
           setFieldMapping(autoMappedFields);
         }}
+        size="small"
       >
         Auto Mapping
       </Button>
+
       <Box
+        sx={{ display: "flex", maxWidth: "700px", width: "100%", gap: "15px" }}
+      >
+        <h2 style={{ width: "50%" }}>To</h2>
+        <h2 style={{ width: "50%" }}>From</h2>
+        <Box sx={{ width: "28px" }} />
+      </Box>
+      <Box
+        sx={{ display: "flex", maxWidth: "700px", width: "100%", gap: "15px" }}
+      >
+        <Box sx={{ flex: 1 }}>
+          <SelectModule
+            modules={modules}
+            fromModuleName={fromModuleName}
+            toModuleName={toModuleName}
+            setModuleName={setToModuleName}
+            label="Select Module Name"
+          />
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <SelectModule
+            modules={modules}
+            fromModuleName={fromModuleName}
+            toModuleName={toModuleName}
+            setModuleName={setFromModuleName}
+            label="Select Module Name"
+          />
+        </Box>
+        <Box sx={{ width: "28px" }} />
+      </Box>
+
+      {fieldMapping.map((field, index) => (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            maxWidth: "700px",
+            width: "100%",
+            gap: "15px",
+          }}
+          mt={2}
+          key={index}
+        >
+          <Box sx={{ flex: 1 }}>
+            <SelectToModuleField
+              fields={field.mandatory ? fieldMapping : toModuleFields}
+              label="Select Field"
+              fieldIndex={index}
+              fieldData={field}
+              setFieldMapping={setFieldMapping}
+              fieldMapping={fieldMapping}
+            />
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <SelectFromModuleFields
+              fields={fromModuleFields.filter(
+                (moduleField) => moduleField.data_type === field?.to?.data_type
+              )}
+              fieldData={field}
+              setFieldMapping={setFieldMapping}
+            />
+          </Box>
+          {!field.mandatory ? (
+            <Box>
+              <IconButton
+                aria-label="delete"
+                size="small"
+                onClick={() => {
+                  setDeleteFieldId(field.id);
+                }}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            </Box>
+          ) : (
+            <Box sx={{ width: "28px" }} />
+          )}
+        </Box>
+      ))}
+
+      {/* <Box
         sx={{
           display: "flex",
           justifyContent: "center",
@@ -170,9 +252,8 @@ function App() {
         }}
         mb={2}
       >
+        <h2>To</h2>
         <Box sx={{ flex: 1 }}>
-          <h2>To</h2>
-
           <SelectModule
             modules={modules}
             fromModuleName={fromModuleName}
@@ -241,20 +322,22 @@ function App() {
             </Box>
           ))}
         </Box>
-      </Box>
+      </Box> */}
       {toModuleName && fromModuleName && (
-        <Button
-          size="small"
-          variant="contained"
-          onClick={() =>
-            setFieldMapping((prev) => [
-              ...prev,
-              { id: uuidv4(), mandatory: false, to: null, from: null },
-            ])
-          }
-        >
-          Add Field
-        </Button>
+        <Box mt={2}>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() =>
+              setFieldMapping((prev) => [
+                ...prev,
+                { id: uuidv4(), mandatory: false, to: null, from: null },
+              ])
+            }
+          >
+            Add Field
+          </Button>
+        </Box>
       )}
       {shouldSubformAdd && <SubForm subformFields={subformFields} />}
     </Box>
