@@ -32,16 +32,7 @@ export default function SelectFromModuleFields({
 
   useEffect(() => {
     // set text to from fields in fieldmapping
-
-    setFieldMapping((prev) =>
-      prev.map((field) => {
-        if (field.id !== fieldData.id) {
-          return field;
-        } else {
-          return { ...field, from: textareaValue };
-        }
-      })
-    );
+    setFieldMapping(textareaValue);
   }, [textareaValue]);
 
   return (

@@ -3,7 +3,7 @@ import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 
-export default function SelectField({
+export default function SelectToModuleField({
   fields,
   label,
   fieldIndex,
@@ -49,26 +49,7 @@ export default function SelectField({
       }
       disabled={fieldData?.["mandatory"]}
       disableClearable={true}
-      onChange={(event, value) => {
-        // set text to from fields in fieldmapping
-
-        setFieldMapping((prev) =>
-          prev.map((field) => {
-            if (field.id !== fieldData.id) {
-              return field;
-            } else {
-              return {
-                ...field,
-                to: {
-                  api_name: value.api_name,
-                  data_type: value.data_type,
-                  display_label: value.display_label,
-                },
-              };
-            }
-          })
-        );
-      }}
+      onChange={setFieldMapping}
       renderInput={(params) => <TextField {...params} label={label} />}
     />
     // </Box>
