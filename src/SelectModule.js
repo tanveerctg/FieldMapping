@@ -11,6 +11,7 @@ export default function Module({
 }) {
   return (
     <Autocomplete
+      size="small"
       disablePortal
       id="combo-box-demo"
       options={modules.filter((module) => module.api_supported)}

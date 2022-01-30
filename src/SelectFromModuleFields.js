@@ -10,6 +10,7 @@ export default function SelectFromModuleFields({
   fields,
   fieldData,
   setFieldMapping,
+  allowedTypes,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [top, setTop] = useState(0);
@@ -43,12 +44,16 @@ export default function SelectFromModuleFields({
         variant="outlined"
         multiline
         rows={1}
+        size="small"
         style={{ width: "100%" }}
         disabled={!fieldData.to}
         aria-describedby={id}
         inputRef={textFieldRef}
         value={fieldData.from}
-        onChange={(e) => setTextAreaValue(e.target.value)}
+        onChange={(e) => {
+          allowedTypes[fieldData?.to?.data_type] &&
+            setTextAreaValue(e.target.value);
+        }}
         onKeyPress={(event) => {
           const grabKeycodeOfLastLetter = event.which || event.keyCode;
           if (grabKeycodeOfLastLetter === 35) {
@@ -113,12 +118,12 @@ export default function SelectFromModuleFields({
         style={{
           position: "absolute",
           top: `${
-            window.pageYOffset - 56 ||
+            window.pageYOffset + 40 ||
             (
               document.documentElement ||
               document.body.parentNode ||
               document.body
-            ).scrollTop - 56
+            ).scrollTop + 40
           }px`,
           left: `${left - 10}px`,
           padding: "20px",
@@ -126,6 +131,7 @@ export default function SelectFromModuleFields({
         }}
       >
         <Autocomplete
+          size="small"
           options={fields}
           // {...(fieldData?.["mandatory"] && { value: fields[fieldIndex] })}
           getOptionLabel={(option) => option.display_label}
@@ -159,7 +165,6 @@ export default function SelectFromModuleFields({
             setTextAreaValue(
               (prevValue) =>
                 prevValue.slice(0, start) +
-                " " +
                 "$" +
                 "{" +
                 value.api_name +

@@ -14,6 +14,7 @@ export default function SelectToModuleField({
   return (
     // <Box mt={2}>
     <Autocomplete
+      size="small"
       disablePortal
       id="combo-box-demo"
       options={fields.filter((field) => {

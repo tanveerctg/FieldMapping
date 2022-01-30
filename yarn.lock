@@ -6997,6 +6997,11 @@ pretty-format@^27.0.0, pretty-format@^27.0.2, pretty-format@^27.4.6:
     ansi-styles "^5.0.0"
     react-is "^17.0.1"
 
+pretty-print-json@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/pretty-print-json/-/pretty-print-json-1.1.2.tgz#9cdd0c815118944ae2d3731d3157b970f4fc0cde"
+  integrity sha512-IzUvxNeondtGwY2PFh8azbA73rt8IpELcVoEu1BHb1PpPxhb2+aumaeeW4VgUlaY7V4Ob2ZKOlie4dnizoJI6g==
+
 process-nextick-args@~2.0.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.1.tgz#7820d9b16120cc55ca9ae7792680ae7dba6d7fe2"

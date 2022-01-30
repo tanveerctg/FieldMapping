@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 //Material Ui
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -6,17 +6,34 @@ import Box from "@mui/material/Box";
 import { Button } from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import Typography from "@mui/material/Typography";
+import Tooltip from "@mui/material/Tooltip";
+
 //UUID
 import { v4 as uuidv4 } from "uuid";
 
 import getModuleFields from "./getModuleFields";
 import SelectToModuleField from "./SelectToModuleField";
 import SelectFromModuleFields from "./SelectFromModuleFields";
+import DialogForDelete from "./DialogForDelete";
 
-export default function SubForm({ subformFields }) {
+const SubForm = forwardRef(({ subformFields }, ref) => {
   //return <div>SubForm:{JSON.stringify(subformFields)}</div>;
   const [modulesForSubForm, setModulesForSubForm] = useState([]);
   const [subforms, setSubforms] = useState([]);
+  const [allowedTypes, setAllowedTypes] = useState({ text: true });
+  const [dialogForSubform, setDialogForSubform] = useState(false);
+  const [dialogForField, setDialogForField] = useState(false);
+
+  // const getSubformFieldData = () => {
+  //   return subforms.map((subform) => subform.fieldMapping);
+  // };
+
+  ref.current = subforms.map((subform) => ({
+    fieldMapping: subform.fieldMapping,
+    toModuleName: subform.toModuleName,
+    fromModuleName: subform.fromModuleName,
+  }));
 
   useEffect(() => {
     setModulesForSubForm(subformFields);
@@ -71,53 +88,69 @@ export default function SubForm({ subformFields }) {
   }, [subforms]);
 
   return (
-    <>
+    <Box mt={4} sx={{ width: "100%" }}>
       {/* {JSON.stringify({ modulesForSubForm })} */}
-      {JSON.stringify({
-        subforms: subforms.map((subform) => subform.fieldMapping),
-      })}
-      {/* <div>SubForm:{JSON.stringify(subformFields)}</div>
-      <Box sx={{ flex: 1 }}>
-        <Autocomplete
-          disablePortal
-          id="combo-box-demo"
-          options={subformFields.to}
-          getOptionLabel={(option) => option.module}
-          onChange={(event, value) => {
-            console.log(value);
-          }}
-          disableClearable={true}
-          // disabled={!!fromModuleName && !!toModuleName}
-          sx={{ width: "100%" }}
-          renderInput={(params) => (
-            <TextField {...params} label="Select Module" />
-          )}
-        />
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <Autocomplete
-          disablePortal
-          id="combo-box-demo"
-          options={subformFields.to}
-          getOptionLabel={(option) => option.module}
-          onChange={(event, value) => {
-            console.log(value);
-          }}
-          disableClearable={true}
-          // disabled={!!fromModuleName && !!toModuleName}
-          sx={{ width: "100%" }}
-          renderInput={(params) => (
-            <TextField {...params} label="Select Module" />
-          )}
-        />
-      </Box>
-      <Box sx={{ width: "28px" }} /> */}
+      {/* {JSON.stringify(ref.current)} */}
+      {/* {JSON.stringify({
+        subforms: subforms,
+      })} */}
+
       {subforms.map((subform, index) => (
-        <Box sx={{ width: "100%" }} key={subform.subform_id}>
+        <Box
+          sx={{ width: "100%", background: "#f8f8f8" }}
+          mb={3}
+          p={2}
+          key={subform.subform_id}
+        >
+          <Box
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="h5" gutterBottom component="div">
+              Subform-{index + 1}
+            </Typography>
+            <Tooltip title="Delete Subform">
+              <Box>
+                <IconButton
+                  aria-label="delete"
+                  size="small"
+                  onClick={() => {
+                    // console.log(subform.subform_id);
+
+                    // const filterSubforms = subforms.filter(
+                    //   (module) => module.subform_id !== subform.subform_id
+                    // );
+                    // setSubforms(filterSubforms);
+                    // console.log({ filterSubforms });
+                    setDialogForSubform(true);
+                  }}
+                >
+                  <CloseIcon fontSize="inherit" />
+                </IconButton>
+                <DialogForDelete
+                  dialog={dialogForSubform}
+                  setDialogOpen={setDialogForSubform}
+                  text="Do you want to delete this subform?"
+                  deleteItem={() => {
+                    console.log(subform.subform_id);
+
+                    const filterSubforms = subforms.filter(
+                      (module) => module.subform_id !== subform.subform_id
+                    );
+                    setSubforms(filterSubforms);
+                    setDialogForSubform(false);
+                    console.log({ filterSubforms });
+                  }}
+                />
+              </Box>
+            </Tooltip>
+          </Box>
           <Box
             sx={{
               display: "flex",
-
               gap: "15px",
             }}
             mt={2}
@@ -126,6 +159,7 @@ export default function SubForm({ subformFields }) {
             {" "}
             <Box sx={{ flex: 1 }}>
               <Autocomplete
+                size="small"
                 disablePortal
                 id="combo-box-demo"
                 // options={subformFields.to}
@@ -169,6 +203,7 @@ export default function SubForm({ subformFields }) {
             </Box>
             <Box sx={{ flex: 1 }}>
               <Autocomplete
+                size="small"
                 disablePortal
                 id="combo-box-demo"
                 options={modulesForSubForm.from.filter((subformModule) => {
@@ -211,29 +246,7 @@ export default function SubForm({ subformFields }) {
                 )}
               />
             </Box>
-            <Box>
-              <IconButton
-                aria-label="delete"
-                size="small"
-                onClick={() => {
-                  console.log(subform.subform_id);
-
-                  const findSubform = subforms.find(
-                    (form) => form.subform_id === subform.subform_id
-                  );
-                  // console.log({ findSubform });
-
-                  const filterSubforms = subforms.filter(
-                    (module) => module.subform_id !== subform.subform_id
-                  );
-                  setSubforms(filterSubforms);
-                  console.log({ filterSubforms });
-                  // setModulesForSubForm(prev=>prev.filter(module=>module.subform_id!==subform.subform_id))
-                }}
-              >
-                <CloseIcon fontSize="inherit" />
-              </IconButton>
-            </Box>
+            <Box sx={{ width: "28px" }} />
           </Box>
 
           {subform.fieldMapping.map((mappedField, index) => (
@@ -260,28 +273,6 @@ export default function SubForm({ subformFields }) {
                   fieldData={mappedField}
                   setFieldMapping={(event, value) => {
                     // set text to from fields in fieldmapping
-                    // setFieldMapping((prev) =>
-                    //   prev.map((mappedField) => {
-                    //     if (mappedField.id !== field.id) {
-                    //       return mappedField;
-                    //     } else {
-                    //       return {
-                    //         ...mappedField,
-                    //         to: {
-                    //           api_name: value.api_name,
-                    //           data_type: value.data_type,
-                    //           display_label: value.display_label,
-                    //         },
-                    //       };
-                    //     }
-                    //   })
-                    // );
-
-                    // update fieldMapping of that specific subform
-                    // const subformId = subform.subform_id;
-                    // const fieldId = mappedField.id;
-                    // const field = mappedField;
-                    // const fieldMapping = subform.fieldMapping;
 
                     const updatedFieldMapping = subform.fieldMapping.map(
                       (field) => {
@@ -330,6 +321,7 @@ export default function SubForm({ subformFields }) {
                       moduleField.data_type === mappedField?.to?.data_type
                   )}
                   fieldData={mappedField}
+                  allowedTypes={allowedTypes}
                   setFieldMapping={(textareaValue) => {
                     const updatedFieldMapping = subform.fieldMapping.map(
                       (field) => {
@@ -351,81 +343,97 @@ export default function SubForm({ subformFields }) {
                           return {
                             ...form,
                             fieldMapping: updatedFieldMapping,
-                            // toModuleName: form.toModuleName,
-                            // fromModuleName: form.fromModuleName,
-                            // fromModuleFields: form.fromModuleFields,
-                            // toModuleFields: form.toModuleFields,
                           };
                         } else {
                           return form;
                         }
                       })
                     );
-
-                    // setFieldMapping((prev) =>
-                    //   prev.map((mappedField) => {
-                    //     if (mappedField.id !== field.id) {
-                    //       return mappedField;
-                    //     } else {
-                    //       return { ...mappedField, from: textareaValue };
-                    //     }
-                    //   })
-                    // );
                   }}
                 />
               </Box>
-              {/* {!mappedField.mandatory ? (
+              {!mappedField.mandatory ? (
                 <Box>
                   <IconButton
                     aria-label="delete"
                     size="small"
                     onClick={() => {
-                      setDeleteFieldId(field.id);
+                      setDialogForField(true);
                     }}
                   >
                     <CloseIcon fontSize="inherit" />
                   </IconButton>
+                  <DialogForDelete
+                    dialog={dialogForField}
+                    setDialogOpen={setDialogForField}
+                    text="Do you want to delete this field?"
+                    deleteItem={() => {
+                      const filteredFieldMapping = subform.fieldMapping.filter(
+                        (field) => {
+                          return mappedField.id !== field.id;
+                        }
+                      );
+
+                      setSubforms((prevSubform) =>
+                        prevSubform.map((form) => {
+                          if (form.subform_id === subform.subform_id) {
+                            return {
+                              ...form,
+                              fieldMapping: filteredFieldMapping,
+                            };
+                          } else {
+                            return form;
+                          }
+                        })
+                      );
+                      setDialogForField(false);
+                    }}
+                  />
                 </Box>
               ) : (
                 <Box sx={{ width: "28px" }} />
-              )}  */}
+              )}
             </Box>
           ))}
 
           {subform?.toModuleName && subform?.fromModuleName && (
-            <Button
-              onClick={() => {
-                //add field to that specific subform
-                setSubforms((prevSubform) =>
-                  prevSubform.map((form) => {
-                    if (form.subform_id === subform.subform_id) {
-                      return {
-                        ...form,
-                        fieldMapping: [
-                          ...form.fieldMapping,
-                          {
-                            id: uuidv4(),
-                            mandatory: false,
-                            to: null,
-                            from: "",
-                            // fromModuleFields:subform.fieldMapping,
-                            // toModuleFields,
-                          },
-                        ],
-                        toModuleName: form.toModuleName,
-                        fromModuleName: form.fromModuleName,
-                        fromModuleFields: form.fromModuleFields,
-                        toModuleFields: form.toModuleFields,
-                      };
-                    } else {
-                      return form;
-                    }
-                  })
-                );
-              }}
-            >
-              Add Field
-            </Button>
+            <Box mt={2}>
+              <Button
+                onClick={() => {
+                  //add field to that specific subform
+                  setSubforms((prevSubform) =>
+                    prevSubform.map((form) => {
+                      if (form.subform_id === subform.subform_id) {
+                        return {
+                          ...form,
+                          fieldMapping: [
+                            ...form.fieldMapping,
+                            {
+                              id: uuidv4(),
+                              mandatory: false,
+                              to: null,
+                              from: "",
+                              // fromModuleFields:subform.fieldMapping,
+                              // toModuleFields,
+                            },
+                          ],
+                          toModuleName: form.toModuleName,
+                          fromModuleName: form.fromModuleName,
+                          fromModuleFields: form.fromModuleFields,
+                          toModuleFields: form.toModuleFields,
+                        };
+                      } else {
+                        return form;
+                      }
+                    })
+                  );
+                }}
+                variant="contained"
+                size="small"
+              >
+                Add Field
+              </Button>
+            </Box>
           )}
         </Box>
       ))}
@@ -449,12 +457,13 @@ export default function SubForm({ subformFields }) {
           }
           variant="outlined"
           size="small"
+          color="error"
         >
           Add Subform
         </Button>
       </Box>
-    </>
+    </Box>
   );
-}
-
+});
 //[{to:'name',from:'name',id:0923498i543298,fieldMapping:[]}]
+export default SubForm;

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, createRef, useMemo } from "react";
 
 //Material Ui
-import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import DownloadIcon from "@mui/icons-material/Download";
 //UUID
 import { v4 as uuidv4 } from "uuid";
 
@@ -16,8 +16,10 @@ import SelectToModuleField from "./SelectToModuleField";
 import SelectFromModuleFields from "./SelectFromModuleFields";
 import SubForm from "./SubForm";
 import handleAutoMapping from "./handleAutoMapping";
+import { prettyPrintJson } from "pretty-print-json";
 
 import "./App.css";
+import DialogForDelete from "./DialogForDelete";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,9 @@ function App() {
   const [deleteFieldId, setDeleteFieldId] = useState(null);
   const [shouldSubformAdd, setShouldSubformAdd] = useState(false);
   const [subformFields, setSubformFields] = useState({ to: [], from: [] });
+  const [allowedTypes, setAllowedTypes] = useState({ text: true });
+  const [dialogForField, setDialogForField] = useState(false);
+  const [formattedJson, setFormattedJson] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -56,16 +61,6 @@ function App() {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    const filtered = fieldMapping.filter(
-      (mappedField) => mappedField.id !== deleteFieldId
-    );
-    setTimeout(() => {
-      setFieldMapping(filtered);
-    }, 100);
-    console.log({ filtered });
-  }, [deleteFieldId]);
 
   useEffect(() => {
     if (fromModuleName && toModuleName) {
@@ -110,16 +105,6 @@ function App() {
         console.log({ mandatoryFields, toModuleFields });
         // setMandatoryFields(mandatoryFields);
         setFieldMapping((prev) => [...prev, ...mandatoryFields]);
-
-        //fieldMapping
-        // [
-        //   {
-        //    id:"23123213",
-        //    from:"deal_name",
-        //    to:{"api_name":"Last_Name","data_type":"text","display_label":"Last Name"},
-        //    mandatory:true,
-        //   }
-        // ]
       })();
     }
   }, [fromModuleName, toModuleName]);
@@ -133,8 +118,9 @@ function App() {
   if (loading) {
     return <div>Loading...</div>;
   }
+  const subform = createRef();
+  // console.log({ toModuleFields, fromModuleFields });
 
-  console.log({ toModuleFields, fromModuleFields });
   return (
     <Box
       sx={{
@@ -146,8 +132,38 @@ function App() {
         width: "100%",
         margin: "0 auto",
       }}
+      p={2}
     >
-      {JSON.stringify(fieldMapping)}
+      <Button
+        variant="contained"
+        color="success"
+        size="small"
+        startIcon={<DownloadIcon />}
+        sx={{ alignSelf: "flex-end" }}
+        disabled={!fromModuleName || !toModuleName}
+        onClick={() => {
+          console.log({
+            mainModule: {
+              fieldMapping,
+              toModuleName,
+              fromModuleName,
+            },
+          });
+          const formattedJson = {
+            mainModule: {
+              fieldMapping,
+              toModuleName,
+              fromModuleName,
+            },
+            subforms: subform.current,
+          };
+          setFormattedJson(formattedJson);
+          console.log(formattedJson);
+        }}
+      >
+        Get JSON
+      </Button>
+
       <Button
         variant="contained"
         onClick={() => {
@@ -241,6 +257,7 @@ function App() {
                 (moduleField) => moduleField.data_type === field?.to?.data_type
               )}
               fieldData={field}
+              allowedTypes={allowedTypes}
               setFieldMapping={(textareaValue) => {
                 setFieldMapping((prev) =>
                   prev.map((mappedField) => {
@@ -260,7 +277,10 @@ function App() {
                 aria-label="delete"
                 size="small"
                 onClick={() => {
-                  setDeleteFieldId(field.id);
+                  const filteredFieldMapping = fieldMapping.filter(
+                    (mappedField) => mappedField.id !== field.id
+                  );
+                  setFieldMapping(filteredFieldMapping);
                 }}
               >
                 <CloseIcon fontSize="inherit" />
@@ -272,86 +292,6 @@ function App() {
         </Box>
       ))}
 
-      {/* <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: "100%",
-        }}
-        mb={2}
-      >
-        <h2>To</h2>
-        <Box sx={{ flex: 1 }}>
-          <SelectModule
-            modules={modules}
-            fromModuleName={fromModuleName}
-            toModuleName={toModuleName}
-            setModuleName={setToModuleName}
-            label="Select Module Name"
-          />
-
-          {fieldMapping.map((field, index) => (
-            <Box mt={2} key={field.id}>
-              <SelectToModuleField
-                fields={field.mandatory ? fieldMapping : toModuleFields}
-                label="Select Field"
-                fieldIndex={index}
-                fieldData={field}
-                setFieldMapping={setFieldMapping}
-                fieldMapping={fieldMapping}
-              />
-            </Box>
-          ))}
-        </Box>
-
-        <Box ml={2} sx={{ flex: 1 }}>
-          <h2>From</h2>
-          <Box sx={{ display: "flex" }}>
-            <SelectModule
-              modules={modules}
-              fromModuleName={fromModuleName}
-              toModuleName={toModuleName}
-              setModuleName={setFromModuleName}
-              label="Select Module Name"
-            />
-            <Box sx={{ width: "36px" }} />
-          </Box>
-          {fieldMapping.map((field) => (
-            <Box
-              mt={2}
-              sx={{ display: "flex", alignItems: "center" }}
-              key={field.id}
-            >
-              <Box sx={{ flex: 1 }}>
-                <SelectFromModuleFields
-                  fields={fromModuleFields.filter(
-                    (moduleField) =>
-                      moduleField.data_type === field?.to?.data_type
-                  )}
-                  fieldData={field}
-                  setFieldMapping={setFieldMapping}
-                />
-              </Box>
-              {!field.mandatory ? (
-                <Box ml={1}>
-                  <IconButton
-                    aria-label="delete"
-                    size="small"
-                    onClick={() => {
-                      setDeleteFieldId(field.id);
-                    }}
-                  >
-                    <CloseIcon fontSize="inherit" />
-                  </IconButton>
-                </Box>
-              ) : (
-                <Box sx={{ width: "36px" }} />
-              )}
-            </Box>
-          ))}
-        </Box>
-      </Box> */}
       {toModuleName && fromModuleName && (
         <Box mt={2}>
           <Button
@@ -368,7 +308,10 @@ function App() {
           </Button>
         </Box>
       )}
-      {shouldSubformAdd && <SubForm subformFields={subformFields} />}
+      {shouldSubformAdd && (
+        <SubForm subformFields={subformFields} ref={subform} />
+      )}
+      {JSON.stringify(formattedJson)}
     </Box>
   );
 }
