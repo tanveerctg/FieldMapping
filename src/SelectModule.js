@@ -8,7 +8,11 @@ export default function Module({
   toModuleName,
   setModuleName,
   label,
+  forToModule,
 }) {
+  // console.log("FORTOMODULE", forToModule);
+  // console.log("FROMMODULENAME", fromModuleName);
+  // console.log("TOMODULENAME", toModuleName);
   return (
     <Autocomplete
       size="small"
@@ -17,9 +21,19 @@ export default function Module({
       options={modules.filter((module) => module.api_supported)}
       getOptionLabel={(option) => option.plural_label}
       onChange={(event, value) => {
-        console.log(value.api_name);
         setModuleName(value.api_name);
       }}
+      value={
+        forToModule
+          ? toModuleName &&
+            modules[
+              modules.findIndex((field) => field.api_name === toModuleName)
+            ]
+          : fromModuleName &&
+            modules[
+              modules.findIndex((field) => field.api_name === fromModuleName)
+            ]
+      }
       disableClearable={true}
       disabled={!!fromModuleName && !!toModuleName}
       sx={{ width: "100%" }}

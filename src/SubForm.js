@@ -17,7 +17,7 @@ import SelectToModuleField from "./SelectToModuleField";
 import SelectFromModuleFields from "./SelectFromModuleFields";
 import DialogForDelete from "./DialogForDelete";
 
-const SubForm = forwardRef(({ subformFields }, ref) => {
+const SubForm = forwardRef(({ subformFields, subformDataFromDb }, ref) => {
   //return <div>SubForm:{JSON.stringify(subformFields)}</div>;
   const [modulesForSubForm, setModulesForSubForm] = useState([]);
   const [subforms, setSubforms] = useState([]);
@@ -30,9 +30,12 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
   // };
 
   ref.current = subforms.map((subform) => ({
+    subform_id: subform.subform_id,
     fieldMapping: subform.fieldMapping,
     toModuleName: subform.toModuleName,
     fromModuleName: subform.fromModuleName,
+    fromModuleFields: [],
+    toModuleFields: [],
   }));
 
   useEffect(() => {
@@ -40,18 +43,58 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
   }, []);
 
   useEffect(() => {
-    console.log("SUBFORM");
+    if (subformDataFromDb) {
+      console.log(subformDataFromDb);
+      setSubforms(subformDataFromDb);
+    }
+  }, [subformDataFromDb]);
+
+  useEffect(() => {
     subforms.forEach(async (subform) => {
       if (
         subform.toModuleName &&
         subform.fromModuleName &&
-        subform.fieldMapping.length === 0
+        subform.fromModuleFields.length === 0 &&
+        subform.toModuleFields.length === 0
       ) {
         console.log("HIT API", subform.subform_id);
-        // const [fromModuleFields, setFromModuleFields] = useState([]);
-        // const [toModuleFields, setToModuleFields] = useState([]);
         const fromModuleFields = await getModuleFields(subform.fromModuleName);
         const toModuleFields = await getModuleFields(subform.toModuleName);
+        const lookupModules = fromModuleFields.flatMap((field) =>
+          field.data_type === "lookup" ? [field] : []
+        );
+        let allfields_include_lookupmodule_fields = [];
+
+        for (let field = 0; field < fromModuleFields.length; field++) {
+          allfields_include_lookupmodule_fields.push({
+            ...fromModuleFields[field],
+            moduleName: subform.fromModuleName,
+          });
+        }
+
+        for (
+          let lookupModule = 0;
+          lookupModule < lookupModules.length;
+          lookupModule++
+        ) {
+          let getLookupFields = await getModuleFields(
+            lookupModules[lookupModule].lookup.module.api_name
+          );
+
+          for (
+            let lookupfield = 0;
+            lookupfield < getLookupFields.length;
+            lookupfield++
+          ) {
+            allfields_include_lookupmodule_fields.push({
+              ...getLookupFields[lookupfield],
+              moduleName: lookupModules[lookupModule].display_label,
+              lookupfield_api_name: lookupModules[lookupModule].api_name,
+            });
+          }
+        }
+
+        console.log("GET LOOKUP FIELDS", allfields_include_lookupmodule_fields);
 
         //Get To Module Field's mandatory fields
         const mandatoryFields = toModuleFields
@@ -68,14 +111,21 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
           }));
         console.log({ mandatoryFields, toModuleFields });
 
+        //if the length of fieldMapping is greater than zero it means this fieldmapping is coming from api (in this fieldmapping mandatory field is already included)
+        //else we have to set the fieldmapping
+        let fieldMapping =
+          subform.fieldMapping.length > 0
+            ? subform.fieldMapping
+            : [...subform.fieldMapping, ...mandatoryFields];
+
         //add mandatoryFields to fieldMapping
         setSubforms((prevSubform) =>
           prevSubform.map((form) => {
             if (form.subform_id === subform.subform_id) {
               return {
                 ...form,
-                fieldMapping: [...form.fieldMapping, ...mandatoryFields],
-                fromModuleFields,
+                fieldMapping: fieldMapping,
+                fromModuleFields: allfields_include_lookupmodule_fields,
                 toModuleFields,
               };
             } else {
@@ -89,12 +139,6 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
 
   return (
     <Box mt={4} sx={{ width: "100%" }}>
-      {/* {JSON.stringify({ modulesForSubForm })} */}
-      {/* {JSON.stringify(ref.current)} */}
-      {/* {JSON.stringify({
-        subforms: subforms,
-      })} */}
-
       {subforms.map((subform, index) => (
         <Box
           sx={{ width: "100%", background: "#f8f8f8" }}
@@ -118,13 +162,6 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
                   aria-label="delete"
                   size="small"
                   onClick={() => {
-                    // console.log(subform.subform_id);
-
-                    // const filterSubforms = subforms.filter(
-                    //   (module) => module.subform_id !== subform.subform_id
-                    // );
-                    // setSubforms(filterSubforms);
-                    // console.log({ filterSubforms });
                     setDialogForSubform(true);
                   }}
                 >
@@ -187,7 +224,11 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
                 onChange={(event, value) => {
                   const updatedSubforms = subforms.map((form) =>
                     form.subform_id === subform.subform_id
-                      ? { ...form, toModuleName: value.module }
+                      ? {
+                          ...form,
+                          toModuleName: value.module,
+                          toModuleFields: [],
+                        }
                       : form
                   );
 
@@ -199,6 +240,7 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
                 renderInput={(params) => (
                   <TextField {...params} label="Select Module" />
                 )}
+                disabled={subform.fromModuleName && subform.toModuleName}
               />
             </Box>
             <Box sx={{ flex: 1 }}>
@@ -232,13 +274,18 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
 
                   const updatedSubforms = subforms.map((form) =>
                     form.subform_id === subform.subform_id
-                      ? { ...form, fromModuleName: value.module }
+                      ? {
+                          ...form,
+                          fromModuleName: value.module,
+                          fromModuleFields: [],
+                        }
                       : form
                   );
                   console.log({ updatedSubforms });
                   setSubforms(updatedSubforms);
                 }}
                 disableClearable={true}
+                disabled={subform.fromModuleName && subform.toModuleName}
                 // disabled={!!fromModuleName && !!toModuleName}
                 sx={{ width: "100%" }}
                 renderInput={(params) => (
@@ -254,7 +301,6 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                maxWidth: "700px",
                 width: "100%",
                 gap: "15px",
               }}
@@ -321,6 +367,7 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
                       moduleField.data_type === mappedField?.to?.data_type
                   )}
                   fieldData={mappedField}
+                  fromModuleName={subform.fromModuleName}
                   allowedTypes={allowedTypes}
                   setFieldMapping={(textareaValue) => {
                     const updatedFieldMapping = subform.fieldMapping.map(
@@ -437,33 +484,36 @@ const SubForm = forwardRef(({ subformFields }, ref) => {
           )}
         </Box>
       ))}
-
-      <Box
-        sx={{
-          display: "flex",
-          maxWidth: "700px",
-          width: "100%",
-          gap: "15px",
-          justifyContent: "center",
-        }}
-        mt={2}
-      >
-        <Button
-          onClick={() =>
-            setSubforms((prev) => [
-              ...prev,
-              { subform_id: uuidv4(), fieldMapping: [] },
-            ])
-          }
-          variant="outlined"
-          size="small"
-          color="error"
+      {Math.min(
+        modulesForSubForm?.to?.length,
+        modulesForSubForm?.from?.length
+      ) > subforms.length && (
+        <Box
+          sx={{
+            display: "flex",
+            width: "100%",
+            gap: "15px",
+            justifyContent: "center",
+          }}
+          mt={2}
         >
-          Add Subform
-        </Button>
-      </Box>
+          <Button
+            onClick={() =>
+              setSubforms((prev) => [
+                ...prev,
+                { subform_id: uuidv4(), fieldMapping: [] },
+              ])
+            }
+            variant="outlined"
+            size="small"
+            color="error"
+          >
+            Add Subform
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 });
-//[{to:'name',from:'name',id:0923498i543298,fieldMapping:[]}]
+
 export default SubForm;

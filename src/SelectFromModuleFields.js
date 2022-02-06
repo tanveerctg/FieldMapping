@@ -11,6 +11,7 @@ export default function SelectFromModuleFields({
   fieldData,
   setFieldMapping,
   allowedTypes,
+  fromModuleName,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [top, setTop] = useState(0);
@@ -137,6 +138,7 @@ export default function SelectFromModuleFields({
           getOptionLabel={(option) => option.display_label}
           // disabled={fieldData?.["mandatory"]}
           sx={{ width: 300, padding: "10px" }}
+          groupBy={(option) => option.moduleName}
           disableClearable={true}
           onChange={(e, value) => {
             // setSelectedField(e.target.textContent);
@@ -153,7 +155,13 @@ export default function SelectFromModuleFields({
               if (isThereAnyKeyword) {
                 newText = textareaValue.replace(
                   /\$\{.+\}/,
-                  "$" + "{" + value.api_name + "}"
+                  "$" +
+                    "{" +
+                    (value.moduleName === fromModuleName
+                      ? ""
+                      : value.lookupfield_api_name + ".") +
+                    value.api_name +
+                    "}"
                 );
                 console.log({ newText });
                 setTextAreaValue(newText);
@@ -167,6 +175,9 @@ export default function SelectFromModuleFields({
                 prevValue.slice(0, start) +
                 "$" +
                 "{" +
+                (value.moduleName === fromModuleName
+                  ? ""
+                  : value.lookupfield_api_name + ".") +
                 value.api_name +
                 "}" +
                 prevValue.slice(end)
