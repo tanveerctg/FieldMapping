@@ -10,9 +10,6 @@ export default function Module({
   label,
   forToModule,
 }) {
-  // console.log("FORTOMODULE", forToModule);
-  // console.log("FROMMODULENAME", fromModuleName);
-  // console.log("TOMODULENAME", toModuleName);
   return (
     <Autocomplete
       size="small"

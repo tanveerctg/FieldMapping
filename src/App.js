@@ -8,6 +8,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import LoadingButton from "@mui/lab/LoadingButton";
 import CircularProgress from "@mui/material/CircularProgress";
+import Alert from "@mui/material/Alert";
 //UUID
 import { v4 as uuidv4 } from "uuid";
 
@@ -80,6 +81,24 @@ function App() {
         setLoading(false);
         console.log({ fromModuleName, toModuleName });
         console.log({ fromModuleFields, toModuleFields });
+
+        //check error
+        if (
+          fromModuleFields.status === "error" ||
+          toModuleFields.status === "error"
+        ) {
+          let errorMsg = "";
+          if (fromModuleFields.status === "error") {
+            errorMsg += `${fromModuleFields.message} (${fromModuleName}) `;
+          }
+          if (toModuleFields.status === "error") {
+            errorMsg += `${!!errorMsg && ","} ${
+              toModuleFields.message
+            } (${toModuleName}) `;
+          }
+          setError(errorMsg);
+          return;
+        }
 
         // get all lookup modules from fromModuleFields
         const lookupModules = fromModuleFields.flatMap((field) =>
@@ -171,10 +190,10 @@ function App() {
     }
   }, [fromModuleName, toModuleName]);
 
-  //any error found while calling zoho apis then show error
-  if (error) {
-    return <div>{error}</div>;
-  }
+  // //any error found while calling zoho apis then show error
+  // if (error) {
+  //   return <div>{error}</div>;
+  // }
 
   //show loader while modules is being fetched
   if (loading) {
@@ -444,6 +463,11 @@ function App() {
         />
       )}
       {JSON.stringify(formattedJson)}
+      {error && (
+        <Box my={2}>
+          <Alert severity="error">{error}</Alert>
+        </Box>
+      )}
     </Box>
   );
 }
